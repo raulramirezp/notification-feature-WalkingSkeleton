@@ -4,12 +4,17 @@ import com.endava.hrapp.notifications.domain.Notification;
 import com.endava.hrapp.notifications.domain.NotificationDAO;
 import com.endava.hrapp.notifications.domain.Process;
 import com.endava.hrapp.notifications.domain.ProcessDAO;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.ws.rs.BeanParam;
 import javax.ws.rs.core.Response;
+import java.util.ArrayList;
+import java.util.List;
 
 @RestController
 @RequestMapping("/")
@@ -25,10 +30,13 @@ public class NotificationController {
         return Response.ok().entity("Hello world!").build();
     }
 
-    @GetMapping("/create")
+    @GetMapping("/processes")
     @ResponseBody
-    public Process createProcess(){
-        Process process = new Process();
+    @JsonIgnoreProperties({"lastUpdate"})
+    public List<Process> createProcess(){
+        List<Process> processes = new ArrayList<>();
+        processDAO.findAll().forEach( process -> processes.add(process));
+       /* Process process = new Process();
         process.setCandidateName("Raul Ramirez");
         process.setProcessesPhase("Interview");
         process.setIsComment(true);
@@ -45,8 +53,8 @@ public class NotificationController {
         notification.setRecruiterUsername("German");
         notification.setProcessId(process.getId());
 
-        notificationDAO.save(notification);
-        return process;
+        notificationDAO.save(notification);*/
+        return processes;
     }
 
     @PutMapping("/update/{id}")
@@ -54,7 +62,17 @@ public class NotificationController {
         Process p = processDAO.findById(id).get();
         p.setIsClosed(true);
         processDAO.save(p);
+    }
 
+    @PostMapping("/create-process")
+    @ResponseBody
+    public ResponseEntity<Process> create(@RequestBody Process process){
+        if(process != null ) {
+            processDAO.save(process);
+            return new ResponseEntity<Process>(process, HttpStatus.OK);
+        }
+        else
+            return new ResponseEntity(HttpStatus.BAD_REQUEST);
     }
 
 }
